@@ -1,0 +1,52 @@
+server:
+  port: ${SERVER_PORT:8080}
+  forward-headers-strategy: framework
+spring:
+  application:
+    name: testtask
+  datasource:
+    driverClassName: org.postgresql.Driver
+    url: ${SPRING_DATA_SOURCE_URL:jdbc:postgresql://localhost:5433/task_db}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:123}
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+    show-sql: true
+  sql:
+    init:
+      mode: always
+  liquibase:
+    change-log: classpath:db/migration/db.changelog-master.yaml
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP_SERVERS:localhost:29092}
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.springframework.kafka.support.serializer.JsonSerializer
+      acks: "all"
+    consumer:
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      group-id: ${KAFKA_CONSUMER_GROUP}
+      auto-offset-reset: earliest
+      enable-auto-commit: false
+      max-poll-records: 20
+      fetch-min-size: 1048576
+      fetch-max-wait: 5000
+    listener:
+      ack-mode: manual
+    topics:
+      task-assign-user: "task-assign-user"
+      task-create-event: "task-create-event"
+    admin:
+      properties:
+        default.replication.factor: 1
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    path: /tasks/swagger-ui.html

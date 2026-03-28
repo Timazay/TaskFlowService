@@ -1,0 +1,53 @@
+databaseChangeLog:
+  - changeSet:
+      id: 03-insert-users
+      author: Тимофей Зайцев
+      changes:
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: "d7112552-5ba0-4f40-8250-d10f4e72bd0c"
+              - column:
+                  name: name
+                  value: "Alice Johnson"
+              - column:
+                  name: email
+                  value: "alice@example.com"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: "c6ba35bc-aafc-4946-a42c-90eb2a0328da"
+              - column:
+                  name: name
+                  value: "Bob Smith"
+              - column:
+                  name: email
+                  value: "bob@example.com"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: "33815145-ce49-450f-995d-33e84553ff77"
+              - column:
+                  name: name
+                  value: "Charlie Brown"
+              - column:
+                  name: email
+                  value: "charlie@example.com"
+        - insert:
+            tableName: users
+            columns:
+              - column:
+                  name: id
+                  value: "5f8222ac-23cf-478e-9403-de050cb3d0d9"
+              - column:
+                  name: name
+                  value: "Diana Prince"
+              - column:
+                  name: email
+                  value: "diana@example.com"

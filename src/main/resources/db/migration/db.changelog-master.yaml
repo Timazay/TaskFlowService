@@ -1,0 +1,7 @@
+databaseChangeLog:
+  - include:
+      file: db/migration/01-create-users-table.yaml
+  - include:
+      file: db/migration/02-create-tasks-table.yaml
+  - include:
+      file: db/migration/03-insert-users.yaml
