@@ -144,18 +144,21 @@ public class TaskServiceTest {
                 .id(taskId1)
                 .name("Task 1")
                 .description("Description 1")
+                .status(TaskStatus.NEW)
                 .build();
         UUID taskId2 = UUID.randomUUID();
         Task task2 = Task.builder()
                 .id(taskId2)
                 .name("Task 2")
                 .description("Description 2")
+                .status(TaskStatus.IN_PROGRESS)
                 .build();
         UUID taskId3 = UUID.randomUUID();
         Task task3 = Task.builder()
                 .id(taskId3)
                 .name("Task 3")
                 .description("Description 3")
+                .status(TaskStatus.COMPLETED)
                 .build();
 
         List<Task> tasks = List.of(task1, task2, task3);
@@ -172,25 +175,28 @@ public class TaskServiceTest {
                 .extracting(
                         FindAllTasksResponse::taskId,
                         FindAllTasksResponse::name,
-                        FindAllTasksResponse::description
+                        FindAllTasksResponse::description,
+                        FindAllTasksResponse::status
                 )
-                .containsExactly(taskId1, "Task 1", "Description 1");
+                .containsExactly(taskId1, "Task 1", "Description 1", TaskStatus.NEW);
 
         assertThat(responses.get(1))
                 .extracting(
                         FindAllTasksResponse::taskId,
                         FindAllTasksResponse::name,
-                        FindAllTasksResponse::description
+                        FindAllTasksResponse::description,
+                        FindAllTasksResponse::status
                 )
-                .containsExactly(taskId2, "Task 2", "Description 2");
+                .containsExactly(taskId2, "Task 2", "Description 2", TaskStatus.IN_PROGRESS);
 
         assertThat(responses.get(2))
                 .extracting(
                         FindAllTasksResponse::taskId,
                         FindAllTasksResponse::name,
-                        FindAllTasksResponse::description
+                        FindAllTasksResponse::description,
+                        FindAllTasksResponse::status
                 )
-                .containsExactly(taskId3, "Task 3", "Description 3");
+                .containsExactly(taskId3, "Task 3", "Description 3", TaskStatus.COMPLETED);
 
         verify(taskRepository, times(1)).findAll(any(Pageable.class));
     }

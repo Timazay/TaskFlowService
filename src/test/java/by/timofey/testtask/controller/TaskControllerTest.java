@@ -104,7 +104,7 @@ public class TaskControllerTest {
         int size = 10;
 
         UUID taskId = UUID.randomUUID();
-        FindAllTasksResponse task = new FindAllTasksResponse(taskId, "Single Task", "Single Description");
+        FindAllTasksResponse task = new FindAllTasksResponse(taskId, "Single Task", "Single Description", TaskStatus.NEW);
 
         when(taskService.findAllTasks(page, size)).thenReturn(List.of(task));
 
@@ -117,9 +117,34 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$", hasSize(1)))
                 .andExpect(jsonPath("$[0].taskId").value(taskId.toString()))
                 .andExpect(jsonPath("$[0].name").value("Single Task"))
-                .andExpect(jsonPath("$[0].description").value("Single Description"));
+                .andExpect(jsonPath("$[0].description").value("Single Description"))
+                .andExpect(jsonPath("$[0].status").value(TaskStatus.NEW.toString()));
 
         verify(taskService, times(1)).findAllTasks(page, size);
+    }
+
+    @Test
+    public void getTasks_WhenSizeLessThanOne_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/tasks")
+                        .param("page", "0")
+                        .param("size", "0"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.uri").exists())
+                .andExpect(jsonPath("$.status").exists())
+                .andExpect(jsonPath("$.message").value("getTasks.size: Size must be >= 1"))
+                .andExpect(jsonPath("$.timestamp").exists());
+    }
+
+    @Test
+    public void getTasks_WhenPageLessThanZero_ShouldReturnBadRequest() throws Exception {
+        mockMvc.perform(get("/api/v1/tasks")
+                        .param("page", "-1")
+                        .param("size", "1"))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.uri").exists())
+                .andExpect(jsonPath("$.status").exists())
+                .andExpect(jsonPath("$.message").value("getTasks.page: Page must be >= 0"))
+                .andExpect(jsonPath("$.timestamp").exists());
     }
 
     @Test
