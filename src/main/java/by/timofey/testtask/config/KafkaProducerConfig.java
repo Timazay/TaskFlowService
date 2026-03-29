@@ -33,7 +33,7 @@ public class KafkaProducerConfig {
 
         DefaultKafkaProducerFactory<String, Object> producerFactory = new DefaultKafkaProducerFactory<>(configProps);
 
-        producerFactory.setTransactionIdPrefix("tx-");
+        producerFactory.setTransactionIdPrefix(propertyConfig.getProducer().transactionIdPrefix());
 
         return producerFactory;
     }

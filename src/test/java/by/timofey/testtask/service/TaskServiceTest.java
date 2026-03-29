@@ -4,13 +4,14 @@ import by.timofey.testtask.config.KafkaPropertyConfig;
 import by.timofey.testtask.config.properties.TopicProperty;
 import by.timofey.testtask.dto.AssignUserToTaskEvent;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
-import by.timofey.testtask.dto.CreateTaskEvent;
+import by.timofey.testtask.dto.request.CreateTaskRequest;
 import by.timofey.testtask.dto.response.CreateTaskResponse;
 import by.timofey.testtask.dto.response.FindAllTasksResponse;
 import by.timofey.testtask.dto.response.FindTaskResponse;
 import by.timofey.testtask.entity.Task;
 import by.timofey.testtask.entity.User;
 import by.timofey.testtask.entity.enums.TaskStatus;
+import by.timofey.testtask.exception.ConflictException;
 import by.timofey.testtask.exception.NotFoundException;
 import by.timofey.testtask.repository.TaskRepository;
 import by.timofey.testtask.repository.UserRepository;
@@ -215,7 +216,7 @@ public class TaskServiceTest {
     @Test
     void createTask_WhenValidRequest_ShouldSaveAndSendProducerRecordWithCorrectTopic() {
         UUID taskId = UUID.randomUUID();
-        CreateTaskEvent request = new CreateTaskEvent("Test Task", "Test Description");
+        CreateTaskRequest request = new CreateTaskRequest("Test Task", "Test Description");
 
         Task savedTask = Task.builder()
                 .id(taskId)
@@ -360,5 +361,38 @@ public class TaskServiceTest {
         );
         verify(taskRepository, times(1)).save(any());
         verify(kafkaTemplate, times(1)).send(anyString(), any());
+    }
+
+    @Test
+    void assignUserToTask_WhenUserAlreadyAssigned_ShouldThrowConflictException() {
+        UUID taskId = UUID.randomUUID();
+        UUID userId = UUID.randomUUID();
+        AssignUserToTaskEvent event = new AssignUserToTaskEvent(taskId, userId);
+
+        Task task = Task.builder()
+                .id(taskId)
+                .name("Test Task")
+                .description("Test Description")
+                .status(TaskStatus.NEW)
+                .build();
+
+        User user = User.builder()
+                .id(userId)
+                .name("John Doe")
+                .email("john@example.com")
+                .build();
+        task.setUser(user);
+
+        when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
+
+        assertThatThrownBy(() -> taskService.assignUserToTask(event))
+                .isInstanceOf(ConflictException.class)
+                .hasMessage("Task is already assigned to this user");
+
+        verify(taskRepository).findById(taskId);
+        verify(userRepository).findById(userId);
+        verify(taskRepository, never()).save(any());
+        verify(kafkaTemplate, never()).send(anyString(), any());
     }
 }

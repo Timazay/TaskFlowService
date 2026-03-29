@@ -3,7 +3,7 @@ package by.timofey.testtask.service;
 import by.timofey.testtask.config.KafkaPropertyConfig;
 import by.timofey.testtask.dto.AssignUserToTaskEvent;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
-import by.timofey.testtask.dto.CreateTaskEvent;
+import by.timofey.testtask.dto.request.CreateTaskRequest;
 import by.timofey.testtask.dto.response.CreateTaskResponse;
 import by.timofey.testtask.dto.response.FindAllTasksResponse;
 import by.timofey.testtask.dto.response.FindTaskResponse;
@@ -11,6 +11,7 @@ import by.timofey.testtask.dto.UserDto;
 import by.timofey.testtask.entity.Task;
 import by.timofey.testtask.entity.User;
 import by.timofey.testtask.entity.enums.TaskStatus;
+import by.timofey.testtask.exception.ConflictException;
 import by.timofey.testtask.exception.NotFoundException;
 import by.timofey.testtask.repository.TaskRepository;
 import by.timofey.testtask.repository.UserRepository;
@@ -53,7 +54,7 @@ public class TaskService {
     }
 
     @Transactional(transactionManager = "transactionManager")
-    public CreateTaskResponse createTask(CreateTaskEvent request) {
+    public CreateTaskResponse createTask(CreateTaskRequest request) {
         Task task = Task.builder()
                 .name(request.name())
                 .description(request.description())
@@ -66,7 +67,6 @@ public class TaskService {
         );
 
         Task savedTask = taskRepository.save(task);
-
         kafkaTemplate.send(record);
 
         return new CreateTaskResponse(savedTask.getId());
@@ -87,10 +87,12 @@ public class TaskService {
         User user = userRepository.findById(event.userId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
+        if (task.getUser() != null && task.getUser().equals(user))
+            throw new ConflictException("Task is already assigned to this user");
+
         task.setUser(user);
 
         taskRepository.save(task);
-
         kafkaTemplate.send(kafkaConfig.getTopics().taskAssignUser(), event);
     }
 }

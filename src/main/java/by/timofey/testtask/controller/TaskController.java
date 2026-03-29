@@ -3,7 +3,7 @@ package by.timofey.testtask.controller;
 import by.timofey.testtask.dto.AssignUserToTaskEvent;
 import by.timofey.testtask.dto.request.AssignUserRequest;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
-import by.timofey.testtask.dto.CreateTaskEvent;
+import by.timofey.testtask.dto.request.CreateTaskRequest;
 import by.timofey.testtask.dto.response.CreateTaskResponse;
 import by.timofey.testtask.dto.response.FindAllTasksResponse;
 import by.timofey.testtask.dto.response.FindTaskResponse;
@@ -83,7 +83,7 @@ public class TaskController {
                             schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @PostMapping
-    public ResponseEntity<CreateTaskResponse> createTask(@Valid @RequestBody CreateTaskEvent task) {
+    public ResponseEntity<CreateTaskResponse> createTask(@Valid @RequestBody CreateTaskRequest task) {
         CreateTaskResponse response = taskService.createTask(task);
         return ResponseEntity.status(HttpStatus.CREATED).body(response);
     }

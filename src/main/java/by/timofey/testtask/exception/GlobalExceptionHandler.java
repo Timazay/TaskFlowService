@@ -10,6 +10,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -35,7 +36,8 @@ public class GlobalExceptionHandler {
                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                     schema = @Schema(implementation = ErrorResponseDto.class)))
     @ExceptionHandler({
-            HttpMessageNotReadableException.class
+            HttpMessageNotReadableException.class,
+            MethodArgumentTypeMismatchException.class
     })
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ErrorResponseDto handleValidationExceptions(Exception ex) {
@@ -57,14 +59,16 @@ public class GlobalExceptionHandler {
     }
 
     @ApiResponse(
-            responseCode = "500",
-            description = "Internal server error",
+            responseCode = "409",
+            description = "Conflict",
             content = @Content(
                     mediaType = MediaType.APPLICATION_JSON_VALUE,
                     schema = @Schema(implementation = ErrorResponseDto.class)))
-    @ExceptionHandler(Exception.class)
-    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
-    public ErrorResponseDto handleException(Exception ex) {
-        return new ErrorResponseDto("500 INTERNAL ERROR", ex.getMessage());
+    @ResponseStatus(HttpStatus.CONFLICT)
+    @ExceptionHandler({
+            ConflictException.class
+    })
+    public ErrorResponseDto handleConflictException(Exception e) {
+        return new ErrorResponseDto("409 CONFLICT", e.getMessage());
     }
 }

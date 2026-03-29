@@ -3,7 +3,7 @@ package by.timofey.testtask.controller;
 import by.timofey.testtask.dto.AssignUserToTaskEvent;
 import by.timofey.testtask.dto.request.AssignUserRequest;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
-import by.timofey.testtask.dto.CreateTaskEvent;
+import by.timofey.testtask.dto.request.CreateTaskRequest;
 import by.timofey.testtask.dto.response.CreateTaskResponse;
 import by.timofey.testtask.dto.response.FindAllTasksResponse;
 import by.timofey.testtask.dto.response.FindTaskResponse;
@@ -125,7 +125,7 @@ public class TaskControllerTest {
 
     @Test
     void createTask_WhenValidRequest_ShouldReturnCreatedStatus() throws Exception {
-        CreateTaskEvent request = new CreateTaskEvent(
+        CreateTaskRequest request = new CreateTaskRequest(
                 "Smth",
                 "Smth"
         );
@@ -140,12 +140,12 @@ public class TaskControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.taskId").value(taskId.toString()));
 
-        verify(taskService, times(1)).createTask(any(CreateTaskEvent.class));
+        verify(taskService, times(1)).createTask(any(CreateTaskRequest.class));
     }
 
     @Test
     void createTask_WhenNameIsNull_ShouldReturnBadRequest() throws Exception {
-        CreateTaskEvent request = new CreateTaskEvent(
+        CreateTaskRequest request = new CreateTaskRequest(
                 null,
                 "Description without name"
         );
@@ -160,12 +160,12 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).createTask(any(CreateTaskEvent.class));
+        verify(taskService, never()).createTask(any(CreateTaskRequest.class));
     }
 
     @Test
     void createTask_WhenDescriptionIsNull_ShouldReturnBadRequest() throws Exception {
-        CreateTaskEvent request = new CreateTaskEvent(
+        CreateTaskRequest request = new CreateTaskRequest(
                 "name without description",
                 null
         );
@@ -180,12 +180,12 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).createTask(any(CreateTaskEvent.class));
+        verify(taskService, never()).createTask(any(CreateTaskRequest.class));
     }
 
     @Test
     void createTask_WhenNameContainsLessThenThreeLetters_ShouldReturnBadRequest() throws Exception {
-        CreateTaskEvent request = new CreateTaskEvent(
+        CreateTaskRequest request = new CreateTaskRequest(
                 "na",
                 "smth"
         );
@@ -200,7 +200,7 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).createTask(any(CreateTaskEvent.class));
+        verify(taskService, never()).createTask(any(CreateTaskRequest.class));
     }
 
     @Test

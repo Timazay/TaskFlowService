@@ -14,7 +14,7 @@ public interface TaskRepository extends JpaRepository<Task, UUID> {
 
     @Query("""
             SELECT t FROM Task t
-            JOIN FETCH t.user u
+            LEFT JOIN FETCH t.user u
             WHERE t.id = :taskId
             """)
     Optional<Task> findFullTaskById(@Param("taskId") UUID taskId);
