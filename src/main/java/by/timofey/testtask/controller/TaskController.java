@@ -1,6 +1,5 @@
 package by.timofey.testtask.controller;
 
-import by.timofey.testtask.dto.AssignUserToTaskEvent;
 import by.timofey.testtask.dto.request.AssignUserRequest;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
 import by.timofey.testtask.dto.request.CreateTaskRequest;
@@ -15,10 +14,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -34,6 +35,7 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/v1/tasks")
 @RequiredArgsConstructor
+@Validated
 public class TaskController {
 
     private final TaskService taskService;
@@ -62,10 +64,17 @@ public class TaskController {
                     responseCode = "200",
                     description = "Tasks found",
                     content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
-                            schema = @Schema(implementation = FindAllTasksResponse.class)))
+                            schema = @Schema(implementation = FindAllTasksResponse.class))),
+            @ApiResponse(
+                    responseCode = "400",
+                    description = "Validation exception",
+                    content = @Content(mediaType = MediaType.APPLICATION_JSON_VALUE,
+                            schema = @Schema(implementation = ErrorResponseDto.class)))
     })
     @GetMapping
-    public List<FindAllTasksResponse> getTasks(@RequestParam int page, @RequestParam int size) {
+    public List<FindAllTasksResponse> getTasks(
+            @RequestParam @Min(value = 0, message = "Page must be >= 0") int page,
+            @RequestParam @Min(value = 1, message = "Size must be >= 1") int size) {
         return taskService.findAllTasks(page, size);
     }
 
@@ -134,10 +143,10 @@ public class TaskController {
             ))
     })
     @PutMapping("/{taskId}/assignee")
-    public ResponseEntity<Void> assignUserToTaskPatch(
+    public ResponseEntity<Void> assignUserToTask(
             @PathVariable UUID taskId,
             @Valid @RequestBody AssignUserRequest request) {
-        taskService.assignUserToTask(new AssignUserToTaskEvent(taskId, request.userId()));
+        taskService.assignUserToTask(taskId, request);
         return new ResponseEntity<>(HttpStatus.OK);
     }
 }

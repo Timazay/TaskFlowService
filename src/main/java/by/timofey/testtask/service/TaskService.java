@@ -2,6 +2,8 @@ package by.timofey.testtask.service;
 
 import by.timofey.testtask.config.KafkaPropertyConfig;
 import by.timofey.testtask.dto.AssignUserToTaskEvent;
+import by.timofey.testtask.dto.CreateTaskEvent;
+import by.timofey.testtask.dto.request.AssignUserRequest;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
 import by.timofey.testtask.dto.request.CreateTaskRequest;
 import by.timofey.testtask.dto.response.CreateTaskResponse;
@@ -39,15 +41,19 @@ public class TaskService {
 
     public FindTaskResponse findByTaskId(UUID taskId) {
         Task task = taskRepository.findFullTaskById(taskId).orElseThrow(() -> new NotFoundException("Task not found"));
+
         UserDto userDto = Optional.ofNullable(task.getUser())
                 .map(user -> new UserDto(user.getId(), user.getName(), user.getEmail()))
                 .orElse(null);
+
         return new FindTaskResponse(task.getName(), task.getDescription(), task.getStatus(), userDto);
     }
 
     public List<FindAllTasksResponse> findAllTasks(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by(Sort.Direction.DESC, "id"));
+
         List<Task> tasks = taskRepository.findAll(pageable).stream().toList();
+
         return tasks.stream()
                 .map(task -> new FindAllTasksResponse(task.getId(), task.getName(), task.getDescription()))
                 .toList();
@@ -63,7 +69,7 @@ public class TaskService {
 
         ProducerRecord<String, Object> record = new ProducerRecord<>(
                 kafkaConfig.getTopics().taskCreateEvent(),
-                request
+                new CreateTaskEvent(task.getId(), request.name())
         );
 
         Task savedTask = taskRepository.save(task);
@@ -75,16 +81,18 @@ public class TaskService {
     public void changeTaskStatus(UUID taskId, ChangeTaskStatusRequest request) {
         Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("Task not found"));
+
         task.setStatus(request.status());
+
         taskRepository.save(task);
     }
 
     @Transactional(transactionManager = "transactionManager")
-    public void assignUserToTask(AssignUserToTaskEvent event) {
-        Task task = taskRepository.findById(event.taskId())
+    public void assignUserToTask(UUID taskId, AssignUserRequest request) {
+        Task task = taskRepository.findById(taskId)
                 .orElseThrow(() -> new NotFoundException("Task not found"));
 
-        User user = userRepository.findById(event.userId())
+        User user = userRepository.findById(request.userId())
                 .orElseThrow(() -> new NotFoundException("User not found"));
 
         if (task.getUser() != null && task.getUser().equals(user))
@@ -93,6 +101,7 @@ public class TaskService {
         task.setUser(user);
 
         taskRepository.save(task);
-        kafkaTemplate.send(kafkaConfig.getTopics().taskAssignUser(), event);
+        kafkaTemplate.send(kafkaConfig.getTopics().taskAssignUser(),
+                new AssignUserToTaskEvent(task.getId(), user.getId()));
     }
 }

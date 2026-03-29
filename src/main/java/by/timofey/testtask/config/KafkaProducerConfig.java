@@ -14,6 +14,7 @@ import java.util.Map;
 @Configuration
 @RequiredArgsConstructor
 public class KafkaProducerConfig {
+
     private final KafkaPropertyConfig propertyConfig;
 
     @Bean
@@ -25,7 +26,6 @@ public class KafkaProducerConfig {
                 propertyConfig.getProducer().keySerializer());
         configProps.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG,
                 propertyConfig.getProducer().valueSerializer());
-        configProps.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "task-assign-tx-${spring.application.instance-taskId:${random.uuid}}");
 
         configProps.put(ProducerConfig.ACKS_CONFIG, propertyConfig.getProducer().acks());
 

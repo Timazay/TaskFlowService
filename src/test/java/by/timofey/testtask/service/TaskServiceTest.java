@@ -3,6 +3,7 @@ package by.timofey.testtask.service;
 import by.timofey.testtask.config.KafkaPropertyConfig;
 import by.timofey.testtask.config.properties.TopicProperty;
 import by.timofey.testtask.dto.AssignUserToTaskEvent;
+import by.timofey.testtask.dto.request.AssignUserRequest;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
 import by.timofey.testtask.dto.request.CreateTaskRequest;
 import by.timofey.testtask.dto.response.CreateTaskResponse;
@@ -88,7 +89,7 @@ public class TaskServiceTest {
         assertThat(response.description()).isEqualTo("Test Description");
         assertThat(response.status()).isEqualTo(TaskStatus.IN_PROGRESS);
         assertThat(response.user()).isNotNull();
-        assertThat(response.user().id()).isEqualTo(userId);
+        assertThat(response.user().userId()).isEqualTo(userId);
         assertThat(response.user().name()).isEqualTo("John Doe");
         assertThat(response.user().email()).isEqualTo("john@example.com");
 
@@ -281,11 +282,11 @@ public class TaskServiceTest {
     void assignUserToTask_WhenTaskNotFound_ShouldThrowNotFoundException() {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        AssignUserToTaskEvent event = new AssignUserToTaskEvent(taskId, userId);
+        AssignUserRequest request = new AssignUserRequest(userId);
 
         when(taskRepository.findById(taskId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.assignUserToTask(event))
+        assertThatThrownBy(() -> taskService.assignUserToTask(taskId, request))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("Task not found");
 
@@ -308,11 +309,11 @@ public class TaskServiceTest {
                 .status(TaskStatus.NEW)
                 .build();
 
-        AssignUserToTaskEvent event = new AssignUserToTaskEvent(taskId, userId);
+        AssignUserRequest request = new AssignUserRequest(userId);
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
-        assertThatThrownBy(() -> taskService.assignUserToTask(event))
+        assertThatThrownBy(() -> taskService.assignUserToTask(taskId, request))
                 .isInstanceOf(NotFoundException.class)
                 .hasMessage("User not found");
 
@@ -327,6 +328,7 @@ public class TaskServiceTest {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
 
+        AssignUserRequest request = new AssignUserRequest(userId);
         AssignUserToTaskEvent event = new AssignUserToTaskEvent(taskId, userId);
 
         Task task = Task.builder()
@@ -346,7 +348,7 @@ public class TaskServiceTest {
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(kafkaConfig.getTopics()).thenReturn(new TopicProperty("task-assign-user", ""));
 
-        taskService.assignUserToTask(event);
+        taskService.assignUserToTask(taskId, request);
 
         verify(taskRepository).findById(taskId);
         verify(userRepository).findById(userId);
@@ -367,7 +369,7 @@ public class TaskServiceTest {
     void assignUserToTask_WhenUserAlreadyAssigned_ShouldThrowConflictException() {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
-        AssignUserToTaskEvent event = new AssignUserToTaskEvent(taskId, userId);
+        AssignUserRequest request = new AssignUserRequest(userId);
 
         Task task = Task.builder()
                 .id(taskId)
@@ -386,7 +388,7 @@ public class TaskServiceTest {
         when(taskRepository.findById(taskId)).thenReturn(Optional.of(task));
         when(userRepository.findById(userId)).thenReturn(Optional.of(user));
 
-        assertThatThrownBy(() -> taskService.assignUserToTask(event))
+        assertThatThrownBy(() -> taskService.assignUserToTask(taskId, request))
                 .isInstanceOf(ConflictException.class)
                 .hasMessage("Task is already assigned to this user");
 

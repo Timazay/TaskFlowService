@@ -1,6 +1,5 @@
 package by.timofey.testtask.controller;
 
-import by.timofey.testtask.dto.AssignUserToTaskEvent;
 import by.timofey.testtask.dto.request.AssignUserRequest;
 import by.timofey.testtask.dto.request.ChangeTaskStatusRequest;
 import by.timofey.testtask.dto.request.CreateTaskRequest;
@@ -24,7 +23,7 @@ import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.argThat;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.never;
@@ -73,7 +72,7 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.name").value("Test Task"))
                 .andExpect(jsonPath("$.description").value("Test Description"))
                 .andExpect(jsonPath("$.status").value("IN_PROGRESS"))
-                .andExpect(jsonPath("$.user.id").value(userId.toString()))
+                .andExpect(jsonPath("$.user.userId").value(userId.toString()))
                 .andExpect(jsonPath("$.user.name").value("John Doe"))
                 .andExpect(jsonPath("$.user.email").value("john@example.com"));
 
@@ -140,7 +139,7 @@ public class TaskControllerTest {
                 .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.taskId").value(taskId.toString()));
 
-        verify(taskService, times(1)).createTask(any(CreateTaskRequest.class));
+        verify(taskService, times(1)).createTask(request);
     }
 
     @Test
@@ -160,7 +159,7 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).createTask(any(CreateTaskRequest.class));
+        verify(taskService, never()).createTask(request);
     }
 
     @Test
@@ -180,7 +179,7 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).createTask(any(CreateTaskRequest.class));
+        verify(taskService, never()).createTask(request);
     }
 
     @Test
@@ -200,7 +199,7 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).createTask(any(CreateTaskRequest.class));
+        verify(taskService, never()).createTask(request);
     }
 
     @Test
@@ -209,7 +208,7 @@ public class TaskControllerTest {
 
         ChangeTaskStatusRequest request = new ChangeTaskStatusRequest(TaskStatus.IN_PROGRESS);
 
-        doNothing().when(taskService).changeTaskStatus(taskId, request);
+        doNothing().when(taskService).changeTaskStatus(eq(taskId), eq(request));
 
         mockMvc.perform(put("/api/v1/tasks/{taskId}/status", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -226,7 +225,7 @@ public class TaskControllerTest {
         ChangeTaskStatusRequest request = new ChangeTaskStatusRequest(TaskStatus.IN_PROGRESS);
 
         doThrow(new NotFoundException("Task not found"))
-                .when(taskService).changeTaskStatus(taskId, request);
+                .when(taskService).changeTaskStatus(eq(taskId), eq(request));
 
         mockMvc.perform(put("/api/v1/tasks/{taskId}/status", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
@@ -256,26 +255,21 @@ public class TaskControllerTest {
                 .andExpect(jsonPath("$.message").exists())
                 .andExpect(jsonPath("$.timestamp").exists());
 
-        verify(taskService, never()).changeTaskStatus(any(UUID.class), any(ChangeTaskStatusRequest.class));
+        verify(taskService, never()).changeTaskStatus(taskId, request);
     }
 
     @Test
-    void assignUserToTaskPatch_WhenValidRequest_ShouldReturnOk() throws Exception {
+    void assignUserToTask_WhenValidRequest_ShouldReturnOk() throws Exception {
         UUID taskId = UUID.randomUUID();
         UUID userId = UUID.randomUUID();
         AssignUserRequest assignUserRequest = new AssignUserRequest(userId);
 
-        doNothing().when(taskService).assignUserToTask(any(AssignUserToTaskEvent.class));
+        doNothing().when(taskService).assignUserToTask(eq(taskId), any(AssignUserRequest.class));
 
         mockMvc.perform(put("/api/v1/tasks/{taskId}/assignee", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(assignUserRequest)))
                 .andExpect(status().isOk());
-
-        verify(taskService, times(1)).assignUserToTask(argThat(event ->
-                event.taskId().equals(taskId) &&
-                        event.userId().equals(userId)
-        ));
     }
 
     @Test
@@ -289,7 +283,7 @@ public class TaskControllerTest {
                         .content(objectMapper.writeValueAsString(invalidRequest)))
                 .andExpect(status().isBadRequest());
 
-        verify(taskService, never()).assignUserToTask(any());
+        verify(taskService, never()).assignUserToTask(taskId, invalidRequest);
     }
 
     @Test
@@ -298,16 +292,14 @@ public class TaskControllerTest {
         UUID userId = UUID.randomUUID();
         AssignUserRequest assignUserRequest = new AssignUserRequest(userId);
 
-        doThrow(new NotFoundException("Task not found with id: " + taskId))
-                .when(taskService).assignUserToTask(any(AssignUserToTaskEvent.class));
+        doThrow(new NotFoundException("Task not found with userId: " + taskId))
+                .when(taskService).assignUserToTask(eq(taskId), any(AssignUserRequest.class));
 
         mockMvc.perform(put("/api/v1/tasks/{taskId}/assignee", taskId)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(assignUserRequest)))
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.status").value("404 NOT FOUND"))
-                .andExpect(jsonPath("$.message").value("Task not found with id: " + taskId));
-
-        verify(taskService, times(1)).assignUserToTask(any());
+                .andExpect(jsonPath("$.message").value("Task not found with userId: " + taskId));
     }
 }

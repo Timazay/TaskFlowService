@@ -11,6 +11,6 @@ public record ChangeTaskStatusRequest(
                 example = "IN_PROGRESS",
                 implementation = TaskStatus.class
         )
-        @NotNull(message = "cannot be empty")
+        @NotNull(message = "status cannot be null")
         TaskStatus status) {
 }

@@ -9,6 +9,7 @@ import org.springframework.kafka.config.TopicBuilder;
 @Configuration
 @RequiredArgsConstructor
 public class KafkaTopicConfig {
+
     private final KafkaPropertyConfig propertyConfig;
 
     @Bean

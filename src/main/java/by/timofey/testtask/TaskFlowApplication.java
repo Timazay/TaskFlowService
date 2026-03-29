@@ -7,10 +7,9 @@ import org.springframework.boot.context.properties.EnableConfigurationProperties
 
 @SpringBootApplication
 @EnableConfigurationProperties(KafkaPropertyConfig.class)
-public class TestTaskApplication {
+public class TaskFlowApplication {
 
 	public static void main(String[] args) {
-		SpringApplication.run(TestTaskApplication.class, args);
+		SpringApplication.run(TaskFlowApplication.class, args);
 	}
-
 }

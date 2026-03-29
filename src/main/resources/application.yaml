@@ -3,7 +3,7 @@ server:
   forward-headers-strategy: framework
 spring:
   application:
-    name: testtask
+    name: task-flow-service
   datasource:
     driverClassName: org.postgresql.Driver
     url: ${SPRING_DATA_SOURCE_URL:jdbc:postgresql://localhost:5433/task_db}
