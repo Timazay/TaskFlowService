@@ -55,7 +55,7 @@ public class TaskService {
         List<Task> tasks = taskRepository.findAll(pageable).stream().toList();
 
         return tasks.stream()
-                .map(task -> new FindAllTasksResponse(task.getId(), task.getName(), task.getDescription()))
+                .map(task -> new FindAllTasksResponse(task.getId(), task.getName(), task.getDescription(), task.getStatus()))
                 .toList();
     }
 
